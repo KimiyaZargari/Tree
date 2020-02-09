@@ -23,29 +23,32 @@ mkTree(List)->
 	NewList = randomize(List, Len/2, Len),
 	Root = mkNode(hd(NewList), 'nil'),
 	{Tree, _} = mkTree(Root, tl(NewList)),
-	if Tree == 'nil' -> Root;
-	true-> Tree
+	Size = randomTree: size(Tree),
+	if  Size =:= 1->
+		mkTree(List);
+	true->
+		Tree
 	end.
-	
-	
+		
 mkTree(Root, List) ->
 	Len = length(List),
 	NumOfChildren = rand:uniform(Len +1) - 1,
 	if NumOfChildren > 0 ->
-	addChildren(Root, List, NumOfChildren, [], 1,  NumOfChildren);
+	addChildren(Root, List, NumOfChildren, [],[], NumOfChildren);
 	NumOfChildren =:= 0 ->
-	{'nil', List}
+	{Root, List}
 	end.
 	
 		
-addChildren(Parent, List, Num, ChList,1, Num2) when (Num > 0) and (List =/= [])->	
-	 addChildren(Parent, tl(List), Num -1, [mkNode(hd(List), Parent)|ChList],1, Num2);
+addChildren(Parent, List, Num, ChList, _ , Num2) when (Num > 0)->	
+	 addChildren(Parent, tl(List), Num - 1, [mkNode(hd(List), Parent)|ChList], [], Num2);
 		
-addChildren(Parent, List,_, ChList, Num3,  Num2) when (Num3 =< Num2) and (ChList =/= []) and (List =/= []) ->			
-	{CurrentChild, NewList} = mkTree(lists: nth(Num3, ChList), List),	
-	addChildren(Parent, NewList,0, [CurrentChild| tl(ChList)], Num3 + 1, Num2);	
-addChildren(Parent, List,_, ChList, _, _) ->
-	NewParent = {element(1, Parent), element(2, Parent), ChList},
+addChildren(Parent, List,0, ChList,UpdatedChList, Num2) when Num2 > 0->			
+	{CurrentChild, NewList} = mkTree(hd(ChList), List),
+	addChildren(Parent, NewList,0, tl(ChList), [CurrentChild|UpdatedChList],Num2 - 1);	
+	
+addChildren(Parent, List,_, _, UpdatedChList,_) ->
+	NewParent = {element(1, Parent), element(2, Parent), UpdatedChList},
 	{NewParent, List}.
 	
 	
@@ -64,18 +67,16 @@ swap(L, I, J)->
 	
 
 size(Tree)->
-	size(Tree, 1).
-size(Tree, Ans)->
 	{_,_,Children} = Tree,
-	CLen = length(Children),
-	if CLen =/= 0 ->
-		childIteration(Children, 1, Ans, CLen);
-	true -> Ans
-	end.
-	
-	
-childIteration(Children, N, Ans, Len) when (N =< Len)->
-		size(lists: nth(N, Children), Ans + Len), 
-		childIteration(Children, N + 1,Ans + Len, Len );
+	size(Children, 1).
+size(Children, Ans)->		
+	Len = length(Children),
+	childIteration(Children, 1, Ans + Len, Len).
+			
+childIteration(Children, N, Ans, Len) when (N =< Len)-> 
+	Node = lists: nth(N, Children),
+	{_, _, NewChildren} = Node,
+	NewAns = size(NewChildren, Ans), 
+	childIteration(Children, N + 1 ,NewAns, Len);
 childIteration(_, _, Ans, _) ->
 	Ans.
